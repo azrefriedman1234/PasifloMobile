@@ -15,25 +15,24 @@ object TdRepository {
         if (update is TdApi.UpdateAuthorizationState) {
             when (update.authorizationState) {
                 is TdApi.AuthorizationStateWaitTdlibParameters -> {
-                    // פתרון הקסם: שימוש בבנאי ריק ומילוי שדות
-                    // זה עוקף את הצורך לדעת את סדר הפרמטרים המדויק
-                    val request = TdApi.SetTdlibParameters()
-                    request.useTestDc = false
-                    request.databaseDirectory = filesPath
-                    request.filesDirectory = filesPath
-                    request.databaseEncryptionKey = null
-                    request.useFileDatabase = true
-                    request.useChatInfoDatabase = true
-                    request.useMessageDatabase = true
-                    request.useSecretChats = true
-                    request.apiId = currentApiId
-                    request.apiHash = currentApiHash
-                    request.systemLanguageCode = "en"
-                    request.deviceModel = "Mobile"
-                    request.systemVersion = "Android"
-                    request.applicationVersion = "1.0"
-                    request.enableStorageOptimizer = true
-                    
+                    // תיקון: 14 פרמטרים בדיוק לפי לוג שגיאה 18
+                    val encryptionKey: ByteArray? = null
+                    val request = TdApi.SetTdlibParameters(
+                        false,          // p0: use_test_dc
+                        filesPath,      // p1: database_directory
+                        filesPath,      // p2: files_directory
+                        encryptionKey,  // p3: encryption_key
+                        true,           // p4: use_file_database
+                        true,           // p5: use_chat_info_database
+                        true,           // p6: use_message_database
+                        true,           // p7: use_secret_chats
+                        currentApiId,   // p8: api_id
+                        currentApiHash, // p9: api_hash
+                        "en",           // p10: system_language_code
+                        "Mobile",       // p11: device_model
+                        "Android",      // p12: system_version
+                        "1.0"           // p13: application_version
+                    )
                     client?.send(request) { }
                 }
                 is TdApi.AuthorizationStateWaitPhoneNumber -> onStatusChanged?.invoke(false)
@@ -137,27 +136,55 @@ object TdRepository {
         client?.send(TdApi.SearchPublicChat(username)) { chatRes ->
             if (chatRes is TdApi.Chat) {
                 
-                // יצירת הודעת מדיה באמצעות אובייקטים ריקים והשמה
+                // הכנת משתני עזר עם טיפוסים מפורשים
+                val thumb: TdApi.InputThumbnail? = null
+                val stickers: IntArray? = null
+                val weirdInputFile: TdApi.InputFile? = null // הפרמטר המסתורי מהלוג
+                val selfDestruct: TdApi.MessageSelfDestructType? = null
+                val replyTo: TdApi.InputMessageReplyTo? = null
+                val options: TdApi.MessageSendOptions? = null
+                val markup: TdApi.ReplyMarkup? = null
+
                 val content: TdApi.InputMessageContent = if (path.endsWith(".mp4")) {
-                    val vid = TdApi.InputMessageVideo()
-                    vid.video = TdApi.InputFileLocal(path)
-                    vid.caption = TdApi.FormattedText(caption, null)
-                    // יתר השדות יישארו ברירת מחדל (null/0) - זה בטוח יותר
-                    vid
+                    // וידאו: 13 פרמטרים בדיוק (לפי לוג 18)
+                    TdApi.InputMessageVideo(
+                        TdApi.InputFileLocal(path), // p0
+                        thumb,                      // p1
+                        weirdInputFile,             // p2 (InputFile! לפי הלוג)
+                        0,                          // p3 (Int duration)
+                        stickers,                   // p4 (IntArray!)
+                        0,                          // p5 (Int width)
+                        0,                          // p6 (Int height)
+                        0,                          // p7 (Int ttl)
+                        false,                      // p8 (Boolean supports_streaming)
+                        TdApi.FormattedText(caption, null), // p9
+                        false,                      // p10 (Boolean show_caption_above)
+                        selfDestruct,               // p11 (MessageSelfDestructType!)
+                        false                       // p12 (Boolean spoiler)
+                    )
                 } else {
-                    val photo = TdApi.InputMessagePhoto()
-                    photo.photo = TdApi.InputFileLocal(path)
-                    photo.caption = TdApi.FormattedText(caption, null)
-                    photo
+                    // תמונה: 9 פרמטרים בדיוק (לפי לוג 18)
+                    TdApi.InputMessagePhoto(
+                        TdApi.InputFileLocal(path), // p0
+                        thumb,                      // p1
+                        stickers,                   // p2 (IntArray!)
+                        0,                          // p3 (Int width)
+                        0,                          // p4 (Int height)
+                        TdApi.FormattedText(caption, null), // p5
+                        false,                      // p6
+                        selfDestruct,               // p7
+                        false                       // p8
+                    )
                 }
 
-                // יצירת בקשת שליחה
-                val req = TdApi.SendMessage()
-                req.chatId = chatRes.id
-                req.messageThreadId = 0L // שימוש ב-Long
-                req.inputMessageContent = content
-                
-                client?.send(req) { sent -> 
+                client?.send(TdApi.SendMessage(
+                    chatRes.id, 
+                    0L,        // חובה Long!
+                    replyTo, 
+                    options, 
+                    markup, 
+                    content
+                )) { sent -> 
                     callback(sent !is TdApi.Error, null) 
                 }
             } else { 
