@@ -15,14 +15,15 @@ object TdRepository {
         if (update is TdApi.UpdateAuthorizationState) {
             when (update.authorizationState) {
                 is TdApi.AuthorizationStateWaitTdlibParameters -> {
-                    // הגדרה מפורשת של null כ-ByteArray
+                    // הגדרה מפורשת של מפתח ההצפנה כ-ByteArray (למניעת בלבול)
                     val encryptionKey: ByteArray? = null
                     
+                    // בנאי עם 14 פרמטרים בדיוק (לפי דרישת גרסה 1.8.56)
                     val request = TdApi.SetTdlibParameters(
                         false,          // use_test_dc
                         filesPath,      // database_directory
                         filesPath,      // files_directory
-                        encryptionKey,  // encryption_key (Typed explicitly)
+                        encryptionKey,  // database_encryption_key
                         true,           // use_file_database
                         true,           // use_chat_info_database
                         true,           // use_message_database
@@ -108,6 +109,7 @@ object TdRepository {
     }
 
     private fun loadChats() { 
+        // בגרסה 1.8.56 offsetOrder הוא long (מספר ענק)
         client?.send(TdApi.GetChats(TdApi.ChatListMain(), 20)) { } 
     }
     
@@ -137,9 +139,9 @@ object TdRepository {
         client?.send(TdApi.SearchPublicChat(username)) { chatRes ->
             if (chatRes is TdApi.Chat) {
                 
-                // הגדרת משתנים מפורשים ל-null כדי למנוע בלבול בסוגים
+                // הכנת המשתנים מראש כדי למנוע בלבול בסוגים (Types)
                 val thumb: TdApi.InputThumbnail? = null
-                val stickerIds: IntArray? = null
+                val addedStickerFileIds: IntArray? = null
                 val selfDestructType: TdApi.MessageSelfDestructType? = null
                 val replyTo: TdApi.InputMessageReplyTo? = null
                 val options: TdApi.MessageSendOptions? = null
@@ -149,35 +151,33 @@ object TdRepository {
                     TdApi.InputMessageVideo(
                         TdApi.InputFileLocal(path), 
                         thumb,                       
-                        stickerIds,                  
-                        0,                          
-                        null, // width (IntArray? or Int?) - try null                       
-                        0, // width                         
-                        0, // height                         
-                        0, // ttl                         
-                        false,                      
+                        addedStickerFileIds, // IntArray?
+                        0, // duration
+                        0, // width
+                        0, // height 
+                        false, // supports_streaming
                         TdApi.FormattedText(caption, null), 
-                        false,                      
-                        selfDestructType,                       
-                        false                       
+                        false, // show_caption_above_media
+                        false, // is_self_destructing
+                        0      // self_destruct_time
                     )
                 } else {
                     TdApi.InputMessagePhoto(
                         TdApi.InputFileLocal(path), 
                         thumb,                       
-                        stickerIds,                  
-                        0,                          
-                        0,                          
+                        addedStickerFileIds, // IntArray?
+                        0, // width                         
+                        0, // height                         
                         TdApi.FormattedText(caption, null), 
-                        false,                      
-                        selfDestructType,                       
-                        false                       
+                        false, // show_caption_above_media
+                        0      // self_destruct_time                       
                     )
                 }
 
+                // השינוי הקריטי: 0L (לונג) ולא 0 (אינט) עבור message_thread_id
                 client?.send(TdApi.SendMessage(
                     chatRes.id, 
-                    0L,      
+                    0L,        // חובה בגרסה 1.8.56!
                     replyTo,    
                     options,    
                     markup,    
