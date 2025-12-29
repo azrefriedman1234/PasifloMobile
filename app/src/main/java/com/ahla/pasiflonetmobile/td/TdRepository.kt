@@ -34,11 +34,6 @@ object TdRepository {
                         Log.e("TdRepository", "Reflection failed", e)
                     }
                 }
-                is TdApi.AuthorizationStateWaitPhoneNumber -> onStatusChanged?.invoke(false)
-                is TdApi.AuthorizationStateReady -> { 
-                    onStatusChanged?.invoke(true)
-                    loadChats() 
-                }
             }
         }
     }
@@ -65,10 +60,6 @@ object TdRepository {
         client?.send(TdApi.SetLogVerbosityLevel(1)) {}
     }
 
-    private fun loadChats() { 
-        client?.send(TdApi.GetChats(TdApi.ChatListMain(), 20)) { } 
-    }
-    
     fun sendCode(phone: String, cb: (Boolean, String?) -> Unit) { 
         client?.send(TdApi.SetAuthenticationPhoneNumber(phone, null)) { r -> 
             if (r is TdApi.Error) cb(false, r.message) else cb(true, null) 
@@ -81,23 +72,14 @@ object TdRepository {
         } 
     }
 
-    // פונקציה לשליחת טקסט - עכשיו עם Reflection מלא ותיקון ל-FormattedText
     fun sendTextByUsername(username: String, text: String, callback: (Boolean, String?) -> Unit) {
         client?.send(TdApi.SearchPublicChat(username)) { chatRes ->
             if (chatRes is TdApi.Chat) {
                 try {
-                    // יצירת תוכן טקסט באמצעות Reflection
                     val tClass = TdApi.InputMessageText::class.java
                     val tCtor = tClass.constructors.find { it.parameterCount == 3 }
+                    val content = tCtor?.newInstance(TdApi.FormattedText(text, null), false, true) as TdApi.InputMessageContent
                     
-                    // שימוש ב-null עבור entities, זה בטוח ב-Reflection
-                    val content = tCtor?.newInstance(
-                        TdApi.FormattedText(text, null),
-                        false, 
-                        true
-                    ) as TdApi.InputMessageContent
-                    
-                    // שליחת ההודעה עם בנאי SendMessage דינמי
                     val sClass = TdApi.SendMessage::class.java
                     val sCtor = sClass.constructors[0]
                     val msgReq = if (sCtor.parameterCount == 6) {
@@ -107,12 +89,9 @@ object TdRepository {
                     }
                     client?.send(msgReq) { sent -> callback(sent !is TdApi.Error, null) }
                 } catch(e: Exception) {
-                    Log.e("TdRepo", "Text Reflection Error", e)
                     callback(false, e.message)
                 }
-            } else {
-                callback(false, "Chat not found")
-            }
+            } else { callback(false, "Chat not found") }
         }
     }
     
@@ -120,31 +99,16 @@ object TdRepository {
         client?.send(TdApi.SearchPublicChat(username)) { chatRes ->
             if (chatRes is TdApi.Chat) {
                 try {
-                    val thumb: TdApi.InputThumbnail? = null
-                    val stickers: IntArray? = null
-                    val weirdInputFile: TdApi.InputFile? = null
-                    val selfDestruct: TdApi.MessageSelfDestructType? = null
-                    
                     val content: TdApi.InputMessageContent
-                    
                     if (path.endsWith(".mp4")) {
                         val vClass = TdApi.InputMessageVideo::class.java
                         val vCtor = vClass.constructors.find { it.parameterCount == 13 }
-                        
-                        content = vCtor?.newInstance(
-                            TdApi.InputFileLocal(path), thumb, weirdInputFile, 0, stickers, 0, 0, 0, false,
-                            TdApi.FormattedText(caption, null), false, selfDestruct, false
-                        ) as TdApi.InputMessageVideo
+                        content = vCtor?.newInstance(TdApi.InputFileLocal(path), null, null, 0, null, 0, 0, 0, false, TdApi.FormattedText(caption, null), false, null, false) as TdApi.InputMessageVideo
                     } else {
                         val pClass = TdApi.InputMessagePhoto::class.java
                         val pCtor = pClass.constructors.find { it.parameterCount == 9 }
-                        
-                        content = pCtor?.newInstance(
-                            TdApi.InputFileLocal(path), thumb, stickers, 0, 0,
-                            TdApi.FormattedText(caption, null), false, selfDestruct, false
-                        ) as TdApi.InputMessagePhoto
+                        content = pCtor?.newInstance(TdApi.InputFileLocal(path), null, null, 0, 0, TdApi.FormattedText(caption, null), false, null, false) as TdApi.InputMessagePhoto
                     }
-
                     val sClass = TdApi.SendMessage::class.java
                     val sCtor = sClass.constructors[0]
                     val msgReq = if (sCtor.parameterCount == 6) {
@@ -152,15 +116,11 @@ object TdRepository {
                     } else {
                          sCtor.newInstance(chatRes.id, 0L, null, null, content) as TdApi.SendMessage
                     }
-
                     client?.send(msgReq) { sent -> callback(sent !is TdApi.Error, null) }
-
                 } catch (e: Exception) {
                     callback(false, "Internal Error: " + e.message)
                 }
-            } else { 
-                callback(false, "Chat not found") 
-            }
+            } else { callback(false, "Chat not found") }
         }
     }
 }
