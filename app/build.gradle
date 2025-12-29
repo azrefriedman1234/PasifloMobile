@@ -14,6 +14,12 @@ android {
         versionCode 1
         versionName "1.0"
         multiDexEnabled true
+        
+        // הדיאטה: בונים רק לארכיטקטורה של טלפונים מודרניים
+        // זה מקטין את העומס על הזיכרון פי 4!
+        ndk {
+            abiFilters 'arm64-v8a'
+        }
     }
 
     buildFeatures {
@@ -31,10 +37,11 @@ android {
     
     packagingOptions {
         doNotStrip "**/*.so"
-        pickFirst 'lib/x86/libc++_shared.so'
-        pickFirst 'lib/x86_64/libc++_shared.so'
-        pickFirst 'lib/armeabi-v7a/libc++_shared.so'
+        // משאירים רק את מה שצריך
         pickFirst 'lib/arm64-v8a/libc++_shared.so'
+        exclude 'lib/x86/**'
+        exclude 'lib/x86_64/**'
+        exclude 'lib/armeabi-v7a/**'
         pickFirst 'META-INF/**'
     }
 
