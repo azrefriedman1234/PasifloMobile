@@ -2,8 +2,8 @@ package com.ahla.pasiflonetmobile.video
 
 import android.graphics.*
 import android.util.Log
-import com.arthenica.ffmpegkit.FFmpegKit
-import com.arthenica.ffmpegkit.FFprobeKit
+import com.arthenica.mobileffmpeg.FFmpeg
+import com.arthenica.mobileffmpeg.FFprobe
 import java.io.File
 import java.io.FileOutputStream
 
@@ -13,9 +13,9 @@ object VideoProcessor {
             try {
                 if (!File(input).exists()) { callback(false); return@Thread }
                 
-                // בדיקת מידע על הוידאו עם FFprobeKit החדש
-                val mediaInfo = FFprobeKit.getMediaInformation(input)
-                val streams = mediaInfo.getMediaInformation().getStreams()
+                // שימוש ב-MobileFFmpeg הישן והטוב
+                val mediaInfo = FFprobe.getMediaInformation(input)
+                val streams = mediaInfo.getStreams()
                 var vW = 1280; var vH = 720
                 
                 for (s in streams) { 
@@ -44,9 +44,9 @@ object VideoProcessor {
                     cmd = "-i \"$input\" $fCmd -c:v libx264 -preset ultrafast -c:a copy -y \"$output\""
                 }
                 
-                // הרצת הפקודה עם FFmpegKit החדש
-                val session = FFmpegKit.execute(cmd)
-                callback(session.getReturnCode().isValueSuccess())
+                // הרצה באמצעות הפקודה הישנה
+                val rc = FFmpeg.execute(cmd)
+                callback(rc == 0)
 
             } catch (e: Exception) { callback(false) }
         }.start()
