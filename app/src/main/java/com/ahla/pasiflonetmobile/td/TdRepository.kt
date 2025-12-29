@@ -15,25 +15,15 @@ object TdRepository {
         if (update is TdApi.UpdateAuthorizationState) {
             when (update.authorizationState) {
                 is TdApi.AuthorizationStateWaitTdlibParameters -> {
-                    // הגדרה מפורשת של מפתח ההצפנה כ-ByteArray (למניעת בלבול)
+                    // הגדרה מפורשת של טיפוס המשתנה
                     val encryptionKey: ByteArray? = null
                     
-                    // בנאי עם 14 פרמטרים בדיוק (לפי דרישת גרסה 1.8.56)
+                    // בנאי עם 14 פרמטרים (מותאם ל-1.8.56)
                     val request = TdApi.SetTdlibParameters(
-                        false,          // use_test_dc
-                        filesPath,      // database_directory
-                        filesPath,      // files_directory
-                        encryptionKey,  // database_encryption_key
-                        true,           // use_file_database
-                        true,           // use_chat_info_database
-                        true,           // use_message_database
-                        true,           // use_secret_chats
-                        currentApiId,   // api_id
-                        currentApiHash, // api_hash
-                        "en",           // system_language_code
-                        "Mobile",       // device_model
-                        "Android",      // system_version
-                        "1.0"           // application_version
+                        false, filesPath, filesPath, encryptionKey, 
+                        true, true, true, true, 
+                        currentApiId, currentApiHash, 
+                        "en", "Mobile", "Android", "1.0"
                     )
                     client?.send(request) { }
                 }
@@ -109,7 +99,6 @@ object TdRepository {
     }
 
     private fun loadChats() { 
-        // בגרסה 1.8.56 offsetOrder הוא long (מספר ענק)
         client?.send(TdApi.GetChats(TdApi.ChatListMain(), 20)) { } 
     }
     
@@ -139,10 +128,10 @@ object TdRepository {
         client?.send(TdApi.SearchPublicChat(username)) { chatRes ->
             if (chatRes is TdApi.Chat) {
                 
-                // הכנת המשתנים מראש כדי למנוע בלבול בסוגים (Types)
+                // משתנים מפורשים למניעת בלבול
                 val thumb: TdApi.InputThumbnail? = null
-                val addedStickerFileIds: IntArray? = null
-                val selfDestructType: TdApi.MessageSelfDestructType? = null
+                val stickers: IntArray? = null
+                val selfDestruct: TdApi.MessageSelfDestructType? = null
                 val replyTo: TdApi.InputMessageReplyTo? = null
                 val options: TdApi.MessageSendOptions? = null
                 val markup: TdApi.ReplyMarkup? = null
@@ -150,37 +139,26 @@ object TdRepository {
                 val content: TdApi.InputMessageContent = if (path.endsWith(".mp4")) {
                     TdApi.InputMessageVideo(
                         TdApi.InputFileLocal(path), 
-                        thumb,                       
-                        addedStickerFileIds, // IntArray?
-                        0, // duration
-                        0, // width
-                        0, // height 
-                        false, // supports_streaming
+                        thumb, stickers, 0, 0, 0, 0, false, 
                         TdApi.FormattedText(caption, null), 
-                        false, // show_caption_above_media
-                        false, // is_self_destructing
-                        0      // self_destruct_time
+                        false, false, 0
                     )
                 } else {
                     TdApi.InputMessagePhoto(
                         TdApi.InputFileLocal(path), 
-                        thumb,                       
-                        addedStickerFileIds, // IntArray?
-                        0, // width                         
-                        0, // height                         
+                        thumb, stickers, 0, 0, 
                         TdApi.FormattedText(caption, null), 
-                        false, // show_caption_above_media
-                        0      // self_destruct_time                       
+                        false, 0
                     )
                 }
 
-                // השינוי הקריטי: 0L (לונג) ולא 0 (אינט) עבור message_thread_id
+                // תיקון קריטי: 0L עבור ה-thread_id
                 client?.send(TdApi.SendMessage(
                     chatRes.id, 
-                    0L,        // חובה בגרסה 1.8.56!
-                    replyTo,    
-                    options,    
-                    markup,    
+                    0L, 
+                    replyTo, 
+                    options, 
+                    markup, 
                     content
                 )) { sent -> 
                     callback(sent !is TdApi.Error, null) 
