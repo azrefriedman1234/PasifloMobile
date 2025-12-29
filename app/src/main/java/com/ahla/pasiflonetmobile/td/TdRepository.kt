@@ -81,28 +81,33 @@ object TdRepository {
         } 
     }
 
-    // פונקציה חדשה לשליחת טקסט בלבד
+    // פונקציה לשליחת טקסט - עכשיו עם Reflection מלא
     fun sendTextByUsername(username: String, text: String, callback: (Boolean, String?) -> Unit) {
         client?.send(TdApi.SearchPublicChat(username)) { chatRes ->
             if (chatRes is TdApi.Chat) {
-                // יצירת הודעת טקסט פשוטה
-                val content = TdApi.InputMessageText(
-                    TdApi.FormattedText(text, null),
-                    false, 
-                    true
-                )
-                
-                // שליחה (בטוחה עם Reflection ליתר ביטחון, למרות שבדרך כלל טקסט יותר פשוט)
                 try {
-                     val sClass = TdApi.SendMessage::class.java
-                     val sCtor = sClass.constructors[0]
-                     val msgReq = if (sCtor.parameterCount == 6) {
+                    // יצירת תוכן טקסט באמצעות Reflection כדי למנוע קריסות קומפילציה
+                    val tClass = TdApi.InputMessageText::class.java
+                    // מחפשים בנאי עם 3 פרמטרים (text, disable_web_preview, clear_draft)
+                    val tCtor = tClass.constructors.find { it.parameterCount == 3 }
+                    
+                    val content = tCtor?.newInstance(
+                        TdApi.FormattedText(text, null),
+                        false, 
+                        true
+                    ) as TdApi.InputMessageContent
+                    
+                    // שליחת ההודעה
+                    val sClass = TdApi.SendMessage::class.java
+                    val sCtor = sClass.constructors[0]
+                    val msgReq = if (sCtor.parameterCount == 6) {
                          sCtor.newInstance(chatRes.id, 0L, null, null, null, content) as TdApi.SendMessage
-                     } else {
+                    } else {
                          sCtor.newInstance(chatRes.id, 0L, null, null, content) as TdApi.SendMessage
-                     }
-                     client?.send(msgReq) { sent -> callback(sent !is TdApi.Error, null) }
+                    }
+                    client?.send(msgReq) { sent -> callback(sent !is TdApi.Error, null) }
                 } catch(e: Exception) {
+                    Log.e("TdRepo", "Text Reflection Error", e)
                     callback(false, e.message)
                 }
             } else {
