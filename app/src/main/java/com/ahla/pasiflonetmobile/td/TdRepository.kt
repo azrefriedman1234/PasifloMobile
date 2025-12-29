@@ -15,16 +15,25 @@ object TdRepository {
         if (update is TdApi.UpdateAuthorizationState) {
             when (update.authorizationState) {
                 is TdApi.AuthorizationStateWaitTdlibParameters -> {
-                    // הגדרה מפורשת של טיפוס המשתנה
-                    val encryptionKey: ByteArray? = null
+                    // פתרון הקסם: שימוש בבנאי ריק ומילוי שדות
+                    // זה עוקף את הצורך לדעת את סדר הפרמטרים המדויק
+                    val request = TdApi.SetTdlibParameters()
+                    request.useTestDc = false
+                    request.databaseDirectory = filesPath
+                    request.filesDirectory = filesPath
+                    request.databaseEncryptionKey = null
+                    request.useFileDatabase = true
+                    request.useChatInfoDatabase = true
+                    request.useMessageDatabase = true
+                    request.useSecretChats = true
+                    request.apiId = currentApiId
+                    request.apiHash = currentApiHash
+                    request.systemLanguageCode = "en"
+                    request.deviceModel = "Mobile"
+                    request.systemVersion = "Android"
+                    request.applicationVersion = "1.0"
+                    request.enableStorageOptimizer = true
                     
-                    // בנאי עם 14 פרמטרים (מותאם ל-1.8.56)
-                    val request = TdApi.SetTdlibParameters(
-                        false, filesPath, filesPath, encryptionKey, 
-                        true, true, true, true, 
-                        currentApiId, currentApiHash, 
-                        "en", "Mobile", "Android", "1.0"
-                    )
                     client?.send(request) { }
                 }
                 is TdApi.AuthorizationStateWaitPhoneNumber -> onStatusChanged?.invoke(false)
@@ -128,39 +137,27 @@ object TdRepository {
         client?.send(TdApi.SearchPublicChat(username)) { chatRes ->
             if (chatRes is TdApi.Chat) {
                 
-                // משתנים מפורשים למניעת בלבול
-                val thumb: TdApi.InputThumbnail? = null
-                val stickers: IntArray? = null
-                val selfDestruct: TdApi.MessageSelfDestructType? = null
-                val replyTo: TdApi.InputMessageReplyTo? = null
-                val options: TdApi.MessageSendOptions? = null
-                val markup: TdApi.ReplyMarkup? = null
-
+                // יצירת הודעת מדיה באמצעות אובייקטים ריקים והשמה
                 val content: TdApi.InputMessageContent = if (path.endsWith(".mp4")) {
-                    TdApi.InputMessageVideo(
-                        TdApi.InputFileLocal(path), 
-                        thumb, stickers, 0, 0, 0, 0, false, 
-                        TdApi.FormattedText(caption, null), 
-                        false, false, 0
-                    )
+                    val vid = TdApi.InputMessageVideo()
+                    vid.video = TdApi.InputFileLocal(path)
+                    vid.caption = TdApi.FormattedText(caption, null)
+                    // יתר השדות יישארו ברירת מחדל (null/0) - זה בטוח יותר
+                    vid
                 } else {
-                    TdApi.InputMessagePhoto(
-                        TdApi.InputFileLocal(path), 
-                        thumb, stickers, 0, 0, 
-                        TdApi.FormattedText(caption, null), 
-                        false, 0
-                    )
+                    val photo = TdApi.InputMessagePhoto()
+                    photo.photo = TdApi.InputFileLocal(path)
+                    photo.caption = TdApi.FormattedText(caption, null)
+                    photo
                 }
 
-                // תיקון קריטי: 0L עבור ה-thread_id
-                client?.send(TdApi.SendMessage(
-                    chatRes.id, 
-                    0L, 
-                    replyTo, 
-                    options, 
-                    markup, 
-                    content
-                )) { sent -> 
+                // יצירת בקשת שליחה
+                val req = TdApi.SendMessage()
+                req.chatId = chatRes.id
+                req.messageThreadId = 0L // שימוש ב-Long
+                req.inputMessageContent = content
+                
+                client?.send(req) { sent -> 
                     callback(sent !is TdApi.Error, null) 
                 }
             } else { 
