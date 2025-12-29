@@ -34,7 +34,12 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.9.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation 'org.drinkless.tdlib:tdlib:1.8.0' 
-    implementation 'com.arthenica:mobile-ffmpeg-full:4.4'
     implementation 'com.github.bumptech.glide:glide:4.15.1'
+
+    // FFmpeg החדש (זמין ב-Maven Central)
+    implementation 'com.arthenica:ffmpeg-kit-full:6.0'
+
+    // TDLib דרך עטיפה של JitPack (כי המקור לא זמין)
+    // משתמשים בגרסה יציבה שמכילה את המחלקות של org.drinkless.tdlib
+    implementation 'com.github.aldhy5:tdlib-android:1.8.0' 
 }
