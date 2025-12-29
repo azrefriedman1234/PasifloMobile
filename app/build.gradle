@@ -43,9 +43,9 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'com.github.bumptech.glide:glide:4.15.1'
 
-    // FFmpeg החדש (תקין)
+    // FFmpeg החדש
     implementation 'com.arthenica:ffmpeg-kit-full:6.0'
 
-    // TDLib המתוקן (עם האות v בגרסה)
-    implementation 'com.github.aldhy5:tdlib-android:v1.8.0'
+    // גרסה יציבה של TDLib מ-JitPack
+    implementation 'com.github.gregorylee:tdlib-android:v1.8.1'
 }
