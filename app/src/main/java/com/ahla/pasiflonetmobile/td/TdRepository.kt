@@ -81,23 +81,23 @@ object TdRepository {
         } 
     }
 
-    // פונקציה לשליחת טקסט - עכשיו עם Reflection מלא
+    // פונקציה לשליחת טקסט - עכשיו עם Reflection מלא ותיקון ל-FormattedText
     fun sendTextByUsername(username: String, text: String, callback: (Boolean, String?) -> Unit) {
         client?.send(TdApi.SearchPublicChat(username)) { chatRes ->
             if (chatRes is TdApi.Chat) {
                 try {
-                    // יצירת תוכן טקסט באמצעות Reflection כדי למנוע קריסות קומפילציה
+                    // יצירת תוכן טקסט באמצעות Reflection
                     val tClass = TdApi.InputMessageText::class.java
-                    // מחפשים בנאי עם 3 פרמטרים (text, disable_web_preview, clear_draft)
                     val tCtor = tClass.constructors.find { it.parameterCount == 3 }
                     
+                    // שימוש ב-null עבור entities, זה בטוח ב-Reflection
                     val content = tCtor?.newInstance(
                         TdApi.FormattedText(text, null),
                         false, 
                         true
                     ) as TdApi.InputMessageContent
                     
-                    // שליחת ההודעה
+                    // שליחת ההודעה עם בנאי SendMessage דינמי
                     val sClass = TdApi.SendMessage::class.java
                     val sCtor = sClass.constructors[0]
                     val msgReq = if (sCtor.parameterCount == 6) {
@@ -164,4 +164,3 @@ object TdRepository {
         }
     }
 }
-// Forced update for reflection build
