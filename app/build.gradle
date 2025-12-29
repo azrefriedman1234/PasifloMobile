@@ -46,6 +46,6 @@ dependencies {
     // FFmpeg החדש
     implementation 'com.arthenica:ffmpeg-kit-full:6.0'
 
-    // גרסה יציבה של TDLib מ-JitPack
-    implementation 'com.github.gregorylee:tdlib-android:v1.8.1'
+    // TDLib ממאגר ציבורי יציב (Kinescope)
+    implementation 'com.github.kinescope-studio:tdlib-android:v1.8.4'
 }
