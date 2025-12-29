@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:layoutDirection="rtl">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:padding="12dp" android:background="#EEE" android:gravity="center_vertical">
+        <Button android:id="@+id/btnLogin" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/login_btn" android:layout_marginEnd="8dp"/>
+        <Button android:id="@+id/btnExit" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/exit_btn" android:backgroundTint="#D32F2F" android:layout_marginEnd="8dp"/>
+        <Button android:id="@+id/btnSettings" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/settings" android:backgroundTint="#757575"/>
+        <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1"/>
+        <TextView android:id="@+id/tvStatusText" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/status_waiting" android:textStyle="bold"/>
+    </LinearLayout>
+    <androidx.recyclerview.widget.RecyclerView android:id="@+id/rvMessages" android:layout_width="match_parent" android:layout_height="match_parent" android:padding="8dp"/>
+</LinearLayout>

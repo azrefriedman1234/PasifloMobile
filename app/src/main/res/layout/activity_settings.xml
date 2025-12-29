@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:padding="24dp" android:layoutDirection="rtl">
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/settings_title" android:textSize="24sp" android:textStyle="bold" android:layout_marginBottom="24dp"/>
+    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="16dp">
+        <com.google.android.material.textfield.TextInputEditText android:id="@+id/etApiId" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/api_id_hint" android:inputType="number"/>
+    </com.google.android.material.textfield.TextInputLayout>
+    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="16dp">
+        <com.google.android.material.textfield.TextInputEditText android:id="@+id/etApiHash" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/api_hash_hint"/>
+    </com.google.android.material.textfield.TextInputLayout>
+    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="16dp">
+        <com.google.android.material.textfield.TextInputEditText android:id="@+id/etChannel" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/channel_hint"/>
+    </com.google.android.material.textfield.TextInputLayout>
+    <Button android:id="@+id/btnPickLogo" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/pick_logo_btn"/>
+    <TextView android:id="@+id/tvLogoPath" android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="8dp" android:text="אין לוגו נבחר"/>
+    <View android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"/>
+    <Button android:id="@+id/btnSave" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/save_btn" android:backgroundTint="#4CAF50"/>
+</LinearLayout>

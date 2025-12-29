@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="horizontal" android:layoutDirection="rtl">
+    <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:padding="16dp">
+        <Button android:id="@+id/btnClose" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/close_btn" />
+        <EditText android:id="@+id/etCaption" android:layout_width="match_parent" android:layout_height="100dp" android:hint="@string/caption_hint" android:gravity="top" android:layout_marginTop="10dp"/>
+        <Button android:id="@+id/btnTranslate" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/translate" android:layout_marginTop="5dp"/>
+        <Button android:id="@+id/btnBlur" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/blur_btn" android:layout_marginTop="5dp"/>
+        <Button android:id="@+id/btnWatermark" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/watermark_btn" android:layout_marginTop="5dp"/>
+        <Button android:id="@+id/btnClearDrawings" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/clear_btn" android:backgroundTint="#888" android:layout_marginTop="5dp"/>
+        <View android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" />
+        <Button android:id="@+id/btnSendChannel" android:layout_width="match_parent" android:layout_height="60dp" android:text="@string/send_to_channel" />
+    </LinearLayout>
+    <FrameLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.5" android:background="#000">
+        <ImageView android:id="@+id/ivPreview" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitCenter" />
+        <com.ahla.pasiflonetmobile.util.DrawOverlayView android:id="@+id/drawOverlay" android:layout_width="match_parent" android:layout_height="match_parent" />
+    </FrameLayout>
+</LinearLayout>

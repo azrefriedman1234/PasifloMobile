@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Pasiflo Mobile</string>
+    <string name="login_btn">התחברות</string>
+    <string name="exit_btn">יציאה</string>
+    <string name="settings">הגדרות</string>
+    <string name="status_connected">מחובר ✅</string>
+    <string name="status_waiting">ממתין...</string>
+    <string name="status_missing_api">חסר API ID/Hash בהגדרות!</string>
+    <string name="login_title">התחברות לטלגרם</string>
+    <string name="phone_hint">מספר טלפון (972...)</string>
+    <string name="code_hint">קוד אימות</string>
+    <string name="password_hint">סיסמה (דו-שלבי)</string>
+    <string name="send_btn">שלח</string>
+    <string name="toast_code_sent">קוד נשלח!</string>
+    <string name="toast_auth_success">מחובר בהצלחה!</string>
+    <string name="media_type">מדיה</string>
+    <string name="text_type">טקסט</string>
+    <string name="close_btn">חזור</string>
+    <string name="caption_hint">תיאור...</string>
+    <string name="translate">תרגם</string>
+    <string name="blur_btn">טשטוש</string>
+    <string name="watermark_btn">לוגו</string>
+    <string name="clear_btn">נקה</string>
+    <string name="send_to_channel">שלח לערוץ</string>
+    <string name="edit_button">עריכה</string>
+    <string name="with_media_checkbox">שלח עם מדיה</string>
+    <string name="settings_title">הגדרות מערכת</string>
+    <string name="api_id_hint">API ID (מספר)</string>
+    <string name="api_hash_hint">API Hash (טקסט)</string>
+    <string name="channel_hint">ערוץ יעד (@username)</string>
+    <string name="logo_path_hint">נתיב קובץ לוגו</string>
+    <string name="save_btn">שמור</string>
+    <string name="pick_logo_btn">בחר לוגו</string>
+</resources>
