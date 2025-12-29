@@ -11,30 +11,27 @@ object TdRepository {
     var onStatusChanged: ((Boolean) -> Unit)? = null
     val downloadedFiles = mutableMapOf<Int, String>()
 
-    // טיפול בתשובות מטלגרם
+    // Handler לקבלת עדכונים
     private val resultHandler = Client.ResultHandler { update ->
         if (update is TdApi.UpdateAuthorizationState) {
             when (update.authorizationState) {
                 is TdApi.AuthorizationStateWaitTdlibParameters -> {
-                    // תיקון: שימוש בפונקציה החדשה שמקבלת את כל הפרמטרים ישירות
-                    // סדר הפרמטרים: useTestDc, databaseDir, filesDir, encryptionKey, useFileDb, useChatDb, useMsgDb, useSecretChats, apiId, apiHash, lang, model, sysVer, appVer, enableStorageOptimizer, ignoreFileNames
+                    // תיקון: 14 פרמטרים בדיוק לפי הלוג
                     val request = TdApi.SetTdlibParameters(
-                        false,                  // use_test_dc
-                        filesPath,              // database_directory
-                        filesPath,              // files_directory
-                        null,                   // database_encryption_key
-                        true,                   // use_file_database
-                        true,                   // use_chat_info_database
-                        true,                   // use_message_database
-                        true,                   // use_secret_chats
-                        currentApiId,           // api_id
-                        currentApiHash,         // api_hash
-                        "en",                   // system_language_code
-                        "Mobile",               // device_model
-                        "Android",              // system_version
-                        "1.0",                  // application_version
-                        true,                   // enable_storage_optimizer
-                        true                    // ignore_file_names
+                        false,          // use_test_dc
+                        filesPath,      // database_directory
+                        filesPath,      // files_directory
+                        null,           // encryption_key
+                        true,           // use_file_db
+                        true,           // use_chat_db
+                        true,           // use_msg_db
+                        true,           // use_secret_chats
+                        currentApiId,   // api_id
+                        currentApiHash, // api_hash
+                        "en",           // language
+                        "Mobile",       // device_model
+                        "Android",      // system_version
+                        "1.0"           // app_version
                     )
                     client?.send(request) { }
                 }
@@ -71,10 +68,7 @@ object TdRepository {
         if (!dir.exists()) dir.mkdirs()
         filesPath = dir.absolutePath
 
-        // יצירת הקליינט
         client = Client.create(resultHandler, null, null)
-        
-        // הגדרת לוגים
         client?.send(TdApi.SetLogVerbosityLevel(1)) {}
     }
 
@@ -113,7 +107,6 @@ object TdRepository {
     }
 
     private fun loadChats() { 
-        // בגרסה החדשה GetChats מקבל רק רשימה וכמות
         client?.send(TdApi.GetChats(TdApi.ChatListMain(), 20)) { } 
     }
     
@@ -142,42 +135,45 @@ object TdRepository {
     fun sendVideoByUsername(username: String, path: String, caption: String, callback: (Boolean, String?) -> Unit) {
         client?.send(TdApi.SearchPublicChat(username)) { chatRes ->
             if (chatRes is TdApi.Chat) {
-                // יצירת תוכן ההודעה בהתאם לגרסה החדשה (פרמטרים רבים)
+                // יצירת תוכן לפי החתימות בלוג השגיאה
                 val content: TdApi.InputMessageContent = if (path.endsWith(".mp4")) {
                     TdApi.InputMessageVideo(
-                        TdApi.InputFileLocal(path), // video
-                        null,                       // thumbnail
-                        null,                       // added_sticker_file_ids
-                        0,                          // duration
-                        0,                          // width
-                        0,                          // height
-                        false,                      // supports_streaming
-                        TdApi.FormattedText(caption, null), // caption
-                        false,                      // show_caption_above_media
-                        false,                      // is_self_destructing
-                        0                           // self_destruct_time
+                        TdApi.InputFileLocal(path), // 0: video
+                        null,                       // 1: thumbnail
+                        null,                       // 2: (mystery arg from log) InputFile?
+                        0,                          // 3: duration
+                        null,                       // 4: added_sticker_file_ids (IntArray)
+                        0,                          // 5: width
+                        0,                          // 6: height
+                        0,                          // 7: ttl / flags
+                        false,                      // 8: supports_streaming
+                        TdApi.FormattedText(caption, null), // 9: caption
+                        false,                      // 10: show_caption_above
+                        null,                       // 11: self_destruct_type
+                        false                       // 12: final boolean
                     )
                 } else {
                     TdApi.InputMessagePhoto(
-                        TdApi.InputFileLocal(path), // photo
-                        null,                       // thumbnail
-                        null,                       // added_sticker_file_ids
-                        0,                          // width
-                        0,                          // height
-                        TdApi.FormattedText(caption, null), // caption
-                        false,                      // show_caption_above_media
-                        0                           // self_destruct_time
+                        TdApi.InputFileLocal(path), // 0: photo
+                        null,                       // 1: thumbnail
+                        null,                       // 2: added_sticker_file_ids (IntArray)
+                        0,                          // 3: width
+                        0,                          // 4: height
+                        TdApi.FormattedText(caption, null), // 5: caption
+                        false,                      // 6: show_caption_above
+                        null,                       // 7: self_destruct_type
+                        false                       // 8: final boolean
                     )
                 }
 
-                // שליחת ההודעה - שימוש ב-null עבור reply_to
+                // תיקון: 0L במקום 0 עבור thread_id
                 client?.send(TdApi.SendMessage(
                     chatRes.id, 
-                    0,      // message_thread_id
-                    null,   // reply_to (חשוב: null במקום 0)
-                    null,   // options
-                    null,   // reply_markup
-                    content // input_message_content
+                    0L,      // message_thread_id (Long!)
+                    null,    // reply_to
+                    null,    // options
+                    null,    // reply_markup
+                    content  // input_message_content
                 )) { sent -> 
                     callback(sent !is TdApi.Error, null) 
                 }
