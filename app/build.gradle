@@ -29,8 +29,10 @@ android {
         jvmTarget = '17'
     }
     
-    // הגדרות למניעת התנגשויות בקבצים בינאריים
     packagingOptions {
+        // פתרון קסם לקבצים גדולים: לא לנסות לעבד אותם
+        doNotStrip "**/*.so"
+        
         pickFirst 'lib/x86/libc++_shared.so'
         pickFirst 'lib/x86_64/libc++_shared.so'
         pickFirst 'lib/armeabi-v7a/libc++_shared.so'
@@ -43,7 +45,6 @@ android {
         checkReleaseBuilds false
     }
     
-    // וידוא שאין כיווץ קוד ב-Debug
     buildTypes {
         debug {
             minifyEnabled false
@@ -60,7 +61,6 @@ dependencies {
     implementation 'com.github.bumptech.glide:glide:4.15.1'
     implementation 'androidx.multidex:multidex:2.0.1'
 
-    // קבצים מקומיים
     implementation files('libs/tdlib.aar')
     implementation files('libs/ffmpeg.aar')
 }
