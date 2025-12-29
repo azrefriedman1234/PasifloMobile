@@ -15,22 +15,24 @@ object TdRepository {
         if (update is TdApi.UpdateAuthorizationState) {
             when (update.authorizationState) {
                 is TdApi.AuthorizationStateWaitTdlibParameters -> {
-                    // תיקון: שימוש בבנאי עם 14 פרמטרים בדיוק (לפי לוג שגיאה קודם)
+                    // הגדרה מפורשת של null כ-ByteArray
+                    val encryptionKey: ByteArray? = null
+                    
                     val request = TdApi.SetTdlibParameters(
-                        false,          // p0: use_test_dc
-                        filesPath,      // p1: database_directory
-                        filesPath,      // p2: files_directory
-                        null,           // p3: encryption_key (ByteArray)
-                        true,           // p4: use_file_database
-                        true,           // p5: use_chat_info_database
-                        true,           // p6: use_message_database
-                        true,           // p7: use_secret_chats
-                        currentApiId,   // p8: api_id
-                        currentApiHash, // p9: api_hash
-                        "en",           // p10: system_language_code
-                        "Mobile",       // p11: device_model
-                        "Android",      // p12: system_version
-                        "1.0"           // p13: application_version
+                        false,          // use_test_dc
+                        filesPath,      // database_directory
+                        filesPath,      // files_directory
+                        encryptionKey,  // encryption_key (Typed explicitly)
+                        true,           // use_file_database
+                        true,           // use_chat_info_database
+                        true,           // use_message_database
+                        true,           // use_secret_chats
+                        currentApiId,   // api_id
+                        currentApiHash, // api_hash
+                        "en",           // system_language_code
+                        "Mobile",       // device_model
+                        "Android",      // system_version
+                        "1.0"           // application_version
                     )
                     client?.send(request) { }
                 }
@@ -135,44 +137,50 @@ object TdRepository {
         client?.send(TdApi.SearchPublicChat(username)) { chatRes ->
             if (chatRes is TdApi.Chat) {
                 
+                // הגדרת משתנים מפורשים ל-null כדי למנוע בלבול בסוגים
+                val thumb: TdApi.InputThumbnail? = null
+                val stickerIds: IntArray? = null
+                val selfDestructType: TdApi.MessageSelfDestructType? = null
+                val replyTo: TdApi.InputMessageReplyTo? = null
+                val options: TdApi.MessageSendOptions? = null
+                val markup: TdApi.ReplyMarkup? = null
+
                 val content: TdApi.InputMessageContent = if (path.endsWith(".mp4")) {
-                    // וידאו: 13 פרמטרים בדיוק
                     TdApi.InputMessageVideo(
-                        TdApi.InputFileLocal(path), // p0: file
-                        null,                       // p1: thumbnail
-                        null,                       // p2: added_sticker_file_ids
-                        0,                          // p3: duration
-                        null,                       // p4: width (IntArray? or Int) -> Log said IntArray!
-                        0,                          // p5: width
-                        0,                          // p6: height
-                        0,                          // p7: ttl
-                        false,                      // p8: supports_streaming
-                        TdApi.FormattedText(caption, null), // p9: caption
-                        false,                      // p10: show_caption_above
-                        null,                       // p11: self_destruct
-                        false                       // p12: spoiler
+                        TdApi.InputFileLocal(path), 
+                        thumb,                       
+                        stickerIds,                  
+                        0,                          
+                        null, // width (IntArray? or Int?) - try null                       
+                        0, // width                         
+                        0, // height                         
+                        0, // ttl                         
+                        false,                      
+                        TdApi.FormattedText(caption, null), 
+                        false,                      
+                        selfDestructType,                       
+                        false                       
                     )
                 } else {
-                    // תמונה: 9 פרמטרים בדיוק
                     TdApi.InputMessagePhoto(
-                        TdApi.InputFileLocal(path), // p0: file
-                        null,                       // p1: thumbnail
-                        null,                       // p2: added_sticker_file_ids
-                        0,                          // p3: width
-                        0,                          // p4: height
-                        TdApi.FormattedText(caption, null), // p5: caption
-                        false,                      // p6: show_caption_above
-                        null,                       // p7: self_destruct
-                        false                       // p8: spoiler
+                        TdApi.InputFileLocal(path), 
+                        thumb,                       
+                        stickerIds,                  
+                        0,                          
+                        0,                          
+                        TdApi.FormattedText(caption, null), 
+                        false,                      
+                        selfDestructType,                       
+                        false                       
                     )
                 }
 
                 client?.send(TdApi.SendMessage(
                     chatRes.id, 
-                    0L,      // message_thread_id (Long!)
-                    null,    // reply_to
-                    null,    // options
-                    null,    // reply_markup
+                    0L,      
+                    replyTo,    
+                    options,    
+                    markup,    
                     content
                 )) { sent -> 
                     callback(sent !is TdApi.Error, null) 
